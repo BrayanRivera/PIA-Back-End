@@ -1,7 +1,8 @@
-﻿//using AutoMapper;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-//using WebApiPIA.DTOs;
+using WebApiPIA.DTOs;
 using WebApiPIA.Entidades;
 
 namespace WebApiPIA.Controllers
@@ -11,18 +12,19 @@ namespace WebApiPIA.Controllers
     public class BoletosController : ControllerBase
     {
         private readonly ApplicationDbContext dbContext;
-        //private readonly IMapper mapper;
+        private readonly IMapper mapper;
 
-        public BoletosController(ApplicationDbContext context/*, IMapper mapper*/)
+        public BoletosController(ApplicationDbContext context, IMapper mapper)
         {
             this.dbContext = context;
-            //this.mapper = mapper;
+            this.mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Boleto>>> Get()
+        public async Task<ActionResult<List<GetBoletoDTO>>> Get()
         {
-            return await dbContext.Boletos.ToListAsync();
+            var boleto = await dbContext.Boletos.ToListAsync();
+            return mapper.Map<List<GetBoletoDTO>>(boleto);
         }
 
         [HttpGet("obtenerClienteGanador/{numeroBoleto:int}", Name = "ObtenerClienteGanador")]
@@ -42,21 +44,26 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post(Boleto boleto)
+        public async Task<ActionResult> Post(BoletoCreacionDTO boletoCreacionDTO)
         {
+            var boleto = mapper.Map<Boleto>(boletoCreacionDTO);
+
             dbContext.Add(boleto);
             await dbContext.SaveChangesAsync();
             return Ok();
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(Boleto boleto, int id)
+        public async Task<ActionResult> Put(BoletoCreacionDTO boletoCreacionDTO, int id)
         {
             var exist = await dbContext.Boletos.AnyAsync(x => x.Id == id);
             if (!exist)
             {
                 return NotFound();
             }
+
+            var boleto = mapper.Map<Boleto>(boletoCreacionDTO);
+            boleto.Id = id;
 
             if (boleto.Id != id)
             {
@@ -66,6 +73,36 @@ namespace WebApiPIA.Controllers
             dbContext.Update(boleto);
             await dbContext.SaveChangesAsync();
             return Ok();
+        }
+
+        [HttpPatch("{id:int}")]
+        public async Task<ActionResult> Patch(int id, JsonPatchDocument<BoletoPatchDTO> patchDocument)
+        {
+            if (patchDocument == null)
+            {
+                return BadRequest();
+            }
+
+            var boleto = await dbContext.Boletos.FirstOrDefaultAsync(x => x.Id == id);
+            if (boleto == null)
+            {
+                return NotFound();
+            }
+
+            var boletoDTO = mapper.Map<BoletoPatchDTO>(boleto);
+            patchDocument.ApplyTo(boletoDTO, ModelState);
+
+            var esValido = TryValidateModel(boletoDTO);
+
+            if (!esValido)
+            {
+                return BadRequest(ModelState);
+            }
+
+            mapper.Map(boletoDTO, boleto);
+
+            await dbContext.SaveChangesAsync();
+            return NoContent();
         }
 
         [HttpDelete("{id:int}")]

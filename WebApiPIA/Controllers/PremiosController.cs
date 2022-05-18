@@ -1,7 +1,8 @@
-﻿//using AutoMapper;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-//using WebApiPIA.DTOs;
+using WebApiPIA.DTOs;
 using WebApiPIA.Entidades;
 
 namespace WebApiPIA.Controllers
@@ -11,18 +12,19 @@ namespace WebApiPIA.Controllers
     public class PremiosController : ControllerBase
     {
         private readonly ApplicationDbContext dbContext;
-        //private readonly IMapper mapper;
+        private readonly IMapper mapper;
 
-        public PremiosController(ApplicationDbContext context/*, IMapper mapper*/)
+        public PremiosController(ApplicationDbContext context, IMapper mapper)
         {
             this.dbContext = context;
-            //this.mapper = mapper;
+            this.mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Premio>>> Get()
+        public async Task<ActionResult<List<GetPremioDTO>>> Get()
         {
-            return await dbContext.Premios.ToListAsync();
+            var premio = await dbContext.Premios.ToListAsync();
+            return mapper.Map<List<GetPremioDTO>>(premio);
         }
 
         [HttpGet("premioDeRifa/{numeroRifa:int}", Name = "ObtenerPremio")]
@@ -48,21 +50,26 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post(Premio premio)
+        public async Task<ActionResult> Post(PremioCreacionDTO premioCreacionDTO)
         {
+            var premio = mapper.Map<Premio>(premioCreacionDTO);
+
             dbContext.Add(premio);
             await dbContext.SaveChangesAsync();
             return Ok();
         }
 
         [HttpPut("{id:int}")] 
-        public async Task<ActionResult> Put(Premio premio, int id)
+        public async Task<ActionResult> Put(PremioCreacionDTO premioCreacionDTO, int id)
         {
             var exist = await dbContext.Premios.AnyAsync(x => x.Id == id);
             if (!exist)
             {
                 return NotFound();
             }
+
+            var premio = mapper.Map<Premio>(premioCreacionDTO);
+            premio.Id = id;
 
             if (premio.Id != id)
             {
@@ -72,6 +79,36 @@ namespace WebApiPIA.Controllers
             dbContext.Update(premio);
             await dbContext.SaveChangesAsync();
             return Ok();
+        }
+
+        [HttpPatch("{id:int}")]
+        public async Task<ActionResult> Patch(int id, JsonPatchDocument<PremioPatchDTO> patchDocument)
+        {
+            if (patchDocument == null)
+            {
+                return BadRequest();
+            }
+
+            var premio = await dbContext.Premios.FirstOrDefaultAsync(x => x.Id == id);
+            if (premio == null)
+            {
+                return NotFound();
+            }
+
+            var premioDTO = mapper.Map<PremioPatchDTO>(premio);
+            patchDocument.ApplyTo(premioDTO, ModelState);
+
+            var esValido = TryValidateModel(premioDTO);
+
+            if (!esValido)
+            {
+                return BadRequest(ModelState);
+            }
+
+            mapper.Map(premioDTO, premio);
+
+            await dbContext.SaveChangesAsync();
+            return NoContent();
         }
 
         [HttpDelete("{id:int}")]
