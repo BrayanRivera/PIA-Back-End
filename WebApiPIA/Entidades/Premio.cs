@@ -6,6 +6,7 @@
 
         public string NombrePremio{ get; set; }
 
-        public List<Rifa> Rifa { get; set; }
+        public int RifaId { get; set; }
+
     }
 }

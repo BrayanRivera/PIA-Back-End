@@ -11,7 +11,7 @@ using WebApiPIA;
 namespace WebApiPIA.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20220509024933_Tablas")]
+    [Migration("20220517221959_Tablas")]
     partial class Tablas
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -42,10 +42,6 @@ namespace WebApiPIA.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClienteID");
-
-                    b.HasIndex("RifaID");
-
                     b.ToTable("Boletos");
                 });
 
@@ -68,8 +64,9 @@ namespace WebApiPIA.Migrations
                     b.Property<int>("NumeroCliente")
                         .HasColumnType("int");
 
-                    b.Property<int>("TelefonoCliente")
-                        .HasColumnType("int");
+                    b.Property<string>("TelefonoCliente")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -88,6 +85,9 @@ namespace WebApiPIA.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("RifaId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("Premios");
@@ -104,59 +104,9 @@ namespace WebApiPIA.Migrations
                     b.Property<int>("NumeroRifa")
                         .HasColumnType("int");
 
-                    b.Property<int>("PremioId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("PremioId");
-
                     b.ToTable("Rifas");
-                });
-
-            modelBuilder.Entity("WebApiPIA.Entidades.Boleto", b =>
-                {
-                    b.HasOne("WebApiPIA.Entidades.Cliente", "Cliente")
-                        .WithMany("Boleto")
-                        .HasForeignKey("ClienteID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("WebApiPIA.Entidades.Rifa", "Rifa")
-                        .WithMany("Boleto")
-                        .HasForeignKey("RifaID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Cliente");
-
-                    b.Navigation("Rifa");
-                });
-
-            modelBuilder.Entity("WebApiPIA.Entidades.Rifa", b =>
-                {
-                    b.HasOne("WebApiPIA.Entidades.Premio", "Premio")
-                        .WithMany("Rifa")
-                        .HasForeignKey("PremioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Premio");
-                });
-
-            modelBuilder.Entity("WebApiPIA.Entidades.Cliente", b =>
-                {
-                    b.Navigation("Boleto");
-                });
-
-            modelBuilder.Entity("WebApiPIA.Entidades.Premio", b =>
-                {
-                    b.Navigation("Rifa");
-                });
-
-            modelBuilder.Entity("WebApiPIA.Entidades.Rifa", b =>
-                {
-                    b.Navigation("Boleto");
                 });
 #pragma warning restore 612, 618
         }

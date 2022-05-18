@@ -10,11 +10,9 @@ namespace WebApiPIA.Entidades
 
         public string ApellidoCliente { get; set; }
 
-        public int TelefonoCliente { get; set; }
+        public string TelefonoCliente { get; set; }
 
         public int NumeroCliente { get; set; }
-
-        public List<Boleto> Boleto { get; set; }
     }
 }
  
