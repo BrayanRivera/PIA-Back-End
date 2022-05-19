@@ -26,6 +26,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<List<GetPremioDTO>>> Get()
         {
             logger.LogInformation("*****OBTENIENDO LOS PREMIOS*****");

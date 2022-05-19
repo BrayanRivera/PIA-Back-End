@@ -48,7 +48,7 @@ namespace WebApiPIA
             services.AddHostedService<SistemaLog>();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebAPIAlumnos", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebApiPIA", Version = "v69" });
 
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
@@ -84,8 +84,20 @@ namespace WebApiPIA
             services.AddAuthorization(opciones =>
             {
                 opciones.AddPolicy("EsAdmin", politica => politica.RequireClaim("esAdmin"));
-                //opciones.AddPolicy("EsCliente", politica => politica.RequireClaim("esCliente"));
             });
+
+            services.AddDataProtection();
+
+            services.AddCors(opciones =>
+            {
+                opciones.AddDefaultPolicy(builder =>
+                {
+                    builder.WithOrigins("https://www.apirequest.io").AllowAnyMethod().AllowAnyHeader();
+                    //builder.WithOrigins("https://google.com").AllowAnyMethod().AllowAnyHeader(); 
+                });
+            });
+
+            services.AddTransient<HashService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
@@ -98,6 +110,7 @@ namespace WebApiPIA
             }
             app.UseHttpsRedirection();
             app.UseRouting();
+            app.UseCors();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
