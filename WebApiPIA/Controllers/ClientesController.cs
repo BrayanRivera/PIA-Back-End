@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,16 +18,18 @@ namespace WebApiPIA.Controllers
         private readonly ApplicationDbContext dbContext;
         private readonly IMapper mapper;
         private readonly ILogger<ClientesController> logger;
+        private readonly UserManager<IdentityUser> userManager;
 
-        public ClientesController(ApplicationDbContext context, IMapper mapper, ILogger<ClientesController> logger)
+        public ClientesController(ApplicationDbContext context, IMapper mapper, ILogger<ClientesController> logger, UserManager<IdentityUser> userManager)
         {
             this.dbContext = context;
             this.mapper = mapper;
             this.logger = logger;
+            this.userManager = userManager;
         }
 
         [HttpGet]
-        [AllowAnonymous]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult<List<GetClienteDTO>>> Get()
         {
             logger.LogInformation("*****OBTENIENDO LOS CLIENTES*****");
@@ -34,11 +37,11 @@ namespace WebApiPIA.Controllers
             return mapper.Map<List<GetClienteDTO>>(clientes);
         }
 
-        [HttpGet("{id:int}", Name = "obtenerCliente")]
-        public async Task<ActionResult<GetClienteDTO>> Get(int id)
+        [HttpGet("{numeroCliente:int}", Name = "obtenerCliente")]
+        public async Task<ActionResult<GetClienteDTO>> Get(int numeroCliente)
         {
             logger.LogInformation("*****OBTENIENDO EL CLIENTE*****");
-            var cliente = await dbContext.Clientes.FirstOrDefaultAsync(x => x.Id == id);
+            var cliente = await dbContext.Clientes.FirstOrDefaultAsync(x => x.NumeroCliente == numeroCliente);
 
             if (cliente == null)
             {
@@ -50,9 +53,15 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpPost]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Post(ClienteCreacionDTO clienteCreacionDTO)
         {
             logger.LogInformation("*****AGREGANDO CLIENTE NUEVO*****");
+            var emailClaim = HttpContext.User.Claims.Where(claim => claim.Type == "email").FirstOrDefault();
+            var email = emailClaim.Value;
+            var usuario = await userManager.FindByEmailAsync(email);
+            var usuarioId = usuario.Id;
+
             var existeCliente = await dbContext.Clientes.AnyAsync(x => x.NumeroCliente == clienteCreacionDTO.NumeroCliente);
 
             if (existeCliente)
@@ -69,16 +78,24 @@ namespace WebApiPIA.Controllers
             }
 
             var cliente = mapper.Map<Cliente>(clienteCreacionDTO);
+            cliente.UsuarioId = usuarioId;
             dbContext.Add(cliente);
             await dbContext.SaveChangesAsync();
             var clienteDTO = mapper.Map<GetClienteDTO>(cliente);
-            return CreatedAtRoute("obtenerCliente", new { id = cliente.Id }, clienteDTO);
+            return CreatedAtRoute("obtenerCliente", new { numeroCleinte = cliente.NumeroCliente }, clienteDTO);
         }
 
         [HttpPut("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Put(ClienteCreacionDTO clienteCreacionDTO, int id)
         {
             logger.LogInformation("*****EDITANDO CLIENTE*****");
+
+            var emailClaim = HttpContext.User.Claims.Where(claim => claim.Type == "email").FirstOrDefault();
+            var email = emailClaim.Value;
+            var usuario = await userManager.FindByEmailAsync(email);
+            var usuarioId = usuario.Id;
+
             var exist = await dbContext.Clientes.AnyAsync(x => x.Id == id);
             if (!exist)
             {
@@ -88,6 +105,7 @@ namespace WebApiPIA.Controllers
 
             var cliente = mapper.Map<Cliente>(clienteCreacionDTO);
             cliente.Id = id;
+            cliente.UsuarioId = usuarioId;
 
             if (cliente.Id != id)
             {
@@ -100,15 +118,23 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpPatch("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Patch(int id, JsonPatchDocument<ClientePatchDTO> patchDocument)
         {
             logger.LogInformation("*****EDITANDO CLIENTE*****");
+
+            var emailClaim = HttpContext.User.Claims.Where(claim => claim.Type == "email").FirstOrDefault();
+            var email = emailClaim.Value;
+            var usuario = await userManager.FindByEmailAsync(email);
+            var usuarioId = usuario.Id;
+
             if (patchDocument == null)
             {
                 return BadRequest();
             }
 
             var cliente = await dbContext.Clientes.FirstOrDefaultAsync(x => x.Id == id);
+            cliente.UsuarioId = usuarioId;
             if (cliente == null)
             {
                 logger.LogError("*****NO EXISTE EL CLIENTE A EDITAR*****");
@@ -130,6 +156,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Delete(int id)
         {
             logger.LogInformation("*****BORRANDO CLIENTE*****");

@@ -5,37 +5,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace WebApiPIA.Migrations
 {
-    public partial class SistemaUsuarios : Migration
+    public partial class ClienteUsuario : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<string>(
-                name: "NombrePremio",
-                table: "Premios",
-                type: "nvarchar(40)",
-                maxLength: 40,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(max)");
-
-            migrationBuilder.AlterColumn<string>(
-                name: "NombreCliente",
-                table: "Clientes",
-                type: "nvarchar(15)",
-                maxLength: 15,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(max)");
-
-            migrationBuilder.AlterColumn<string>(
-                name: "ApellidoCliente",
-                table: "Clientes",
-                type: "nvarchar(15)",
-                maxLength: 15,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(max)");
-
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
@@ -73,6 +46,48 @@ namespace WebApiPIA.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Boletos",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    NumeroBoleto = table.Column<int>(type: "int", nullable: false),
+                    ClienteID = table.Column<int>(type: "int", nullable: false),
+                    RifaID = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Boletos", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Premios",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    NombrePremio = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
+                    RifaId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Premios", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Rifas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    NumeroRifa = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Rifas", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -181,6 +196,29 @@ namespace WebApiPIA.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Clientes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    NombreCliente = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
+                    ApellidoCliente = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
+                    TelefonoCliente = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    NumeroCliente = table.Column<int>(type: "int", nullable: false),
+                    UsuarioId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Clientes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Clientes_AspNetUsers_UsuarioId",
+                        column: x => x.UsuarioId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -219,6 +257,11 @@ namespace WebApiPIA.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Clientes_UsuarioId",
+                table: "Clientes",
+                column: "UsuarioId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -239,37 +282,22 @@ namespace WebApiPIA.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "Boletos");
+
+            migrationBuilder.DropTable(
+                name: "Clientes");
+
+            migrationBuilder.DropTable(
+                name: "Premios");
+
+            migrationBuilder.DropTable(
+                name: "Rifas");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
-
-            migrationBuilder.AlterColumn<string>(
-                name: "NombrePremio",
-                table: "Premios",
-                type: "nvarchar(max)",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(40)",
-                oldMaxLength: 40);
-
-            migrationBuilder.AlterColumn<string>(
-                name: "NombreCliente",
-                table: "Clientes",
-                type: "nvarchar(max)",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(15)",
-                oldMaxLength: 15);
-
-            migrationBuilder.AlterColumn<string>(
-                name: "ApellidoCliente",
-                table: "Clientes",
-                type: "nvarchar(max)",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(15)",
-                oldMaxLength: 15);
         }
     }
 }

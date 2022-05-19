@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +11,7 @@ namespace WebApiPIA.Controllers
 {
     [ApiController]
     [Route("premios")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class PremiosController : ControllerBase
     {
         private readonly ApplicationDbContext dbContext;
@@ -31,6 +34,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpGet("premioDeRifa/{numeroRifa:int}", Name = "ObtenerPremio")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult<List<Rifa>>> Get(int numeroRifa)
         {
             logger.LogInformation("*****OBTENIENDO EL PREMIO*****");
@@ -53,6 +57,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpPost]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Post(PremioCreacionDTO premioCreacionDTO)
         {
             logger.LogInformation("*****AGREGANDO EL PREMIO*****");
@@ -70,7 +75,8 @@ namespace WebApiPIA.Controllers
             return Ok();
         }
 
-        [HttpPut("{id:int}")] 
+        [HttpPut("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Put(PremioCreacionDTO premioCreacionDTO, int id)
         {
             logger.LogInformation("*****EDITANDO EL PREMIO*****");
@@ -96,6 +102,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpPatch("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Patch(int id, JsonPatchDocument<PremioPatchDTO> patchDocument)
         {
             logger.LogInformation("*****EDITANDO EL PREMIO*****");
@@ -126,6 +133,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Delete(int id)
         {
             logger.LogInformation("*****BORRANDO EL PREMIO*****");

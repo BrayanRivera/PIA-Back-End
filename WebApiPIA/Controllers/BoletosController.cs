@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +11,7 @@ namespace WebApiPIA.Controllers
 {
     [ApiController]
     [Route("boletos")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class BoletosController : ControllerBase
     {
         private readonly ApplicationDbContext dbContext;
@@ -23,6 +26,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpGet]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult<List<GetBoletoDTO>>> Get()
         {
             logger.LogInformation("*****OBTENIENDO LOS BOLETOS*****");
@@ -31,6 +35,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpGet("obtenerClienteGanador/{numeroBoleto:int}", Name = "ObtenerClienteGanador")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult<List<Boleto>>> Get(int numeroBoleto)
         {
             logger.LogInformation("*****OBTENIENDO CLIENTE GANADOR*****");
@@ -70,6 +75,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Put(BoletoCreacionDTO boletoCreacionDTO, int id)
         {
             logger.LogInformation("*****EDITANDO BOLETO*****");
@@ -94,6 +100,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpPatch("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Patch(int id, JsonPatchDocument<BoletoPatchDTO> patchDocument)
         {
             logger.LogInformation("*****EDITANDO BOLETO*****");
@@ -124,6 +131,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Delete(int id)
         {
             logger.LogInformation("*****BORRANDO BOLETO*****");

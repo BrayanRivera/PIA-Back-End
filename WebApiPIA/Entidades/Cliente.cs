@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 using WebApiPIA.Validaciones;
 
 namespace WebApiPIA.Entidades
@@ -22,6 +23,9 @@ namespace WebApiPIA.Entidades
         [Required(ErrorMessage = "El campo {0} es requierido")]
         [Range(100000, 999999, ErrorMessage = "El numero de la rifa debe de ser un valor entre 100000 y 999999")]
         public int NumeroCliente { get; set; }
+
+        public string UsuarioId { get; set; }
+        public IdentityUser Usuario { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

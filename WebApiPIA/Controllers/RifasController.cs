@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +11,7 @@ namespace WebApiPIA.Controllers
 {
     [ApiController]
     [Route("rifas")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class RifasController : ControllerBase
     {
         private readonly ApplicationDbContext dbContext;
@@ -31,6 +34,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpGet("obtenerBoletoGanador/{numeroRifa:int}", Name = "ObtenerBoletoGanador")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult<List<Rifa>>> Get(int numeroRifa)
         {
             logger.LogInformation("*****OBTENIENDO EL BOLETO GANADOR*****");
@@ -56,6 +60,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpPost]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Post(RifaCreacionDTO rifaCreacionDTO)
         {
             logger.LogInformation("*****AGREGANDO LA RIFA*****");
@@ -75,6 +80,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Put(RifaCreacionDTO rifaCreacionDTO, int id)
         {
             logger.LogInformation("*****EDITANDO LA RIFA*****");
@@ -99,6 +105,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpPatch("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Patch(int id, JsonPatchDocument<RifaPatchDTO> patchDocument)
         {
             logger.LogInformation("*****EDITANDO LA RIFA*****");
@@ -129,6 +136,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
         public async Task<ActionResult> Delete(int id)
         {
             logger.LogInformation("*****BORRANDO LA RIFA*****");
