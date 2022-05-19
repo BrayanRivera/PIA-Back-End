@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +11,7 @@ namespace WebApiPIA.Controllers
 {
     [ApiController]
     [Route("clientes")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ClientesController : ControllerBase
     {
         private readonly ApplicationDbContext dbContext;
@@ -23,6 +26,7 @@ namespace WebApiPIA.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<List<GetClienteDTO>>> Get()
         {
             logger.LogInformation("*****OBTENIENDO LOS CLIENTES*****");
