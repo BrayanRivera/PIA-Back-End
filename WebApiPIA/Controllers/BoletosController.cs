@@ -13,16 +13,19 @@ namespace WebApiPIA.Controllers
     {
         private readonly ApplicationDbContext dbContext;
         private readonly IMapper mapper;
+        private readonly ILogger<ClientesController> logger;
 
-        public BoletosController(ApplicationDbContext context, IMapper mapper)
+        public BoletosController(ApplicationDbContext context, IMapper mapper, ILogger<ClientesController> logger)
         {
             this.dbContext = context;
             this.mapper = mapper;
+            this.logger = logger;
         }
 
         [HttpGet]
         public async Task<ActionResult<List<GetBoletoDTO>>> Get()
         {
+            logger.LogInformation("*****OBTENIENDO LOS BOLETOS*****");
             var boleto = await dbContext.Boletos.ToListAsync();
             return mapper.Map<List<GetBoletoDTO>>(boleto);
         }
@@ -30,24 +33,37 @@ namespace WebApiPIA.Controllers
         [HttpGet("obtenerClienteGanador/{numeroBoleto:int}", Name = "ObtenerClienteGanador")]
         public async Task<ActionResult<List<Boleto>>> Get(int numeroBoleto)
         {
+            logger.LogInformation("*****OBTENIENDO CLIENTE GANADOR*****");
             var boleto = await dbContext.Boletos.FirstOrDefaultAsync(x => x.NumeroBoleto == numeroBoleto);
             if (boleto == null)
             {
-                return NotFound();
+                logger.LogError("*****NO SE ENCONTRO EL BOLETO*****");
+                return NotFound("");
             }
 
             var clienteGanador = await dbContext.Clientes.FirstOrDefaultAsync(clienteDB => clienteDB.Id == boleto.ClienteID);
+            if (clienteGanador == null)
+            {
+                logger.LogError("*****NO SE ENCONTRO CLIENTE ASCOCIADA AL BOLETO*****");
+                return NotFound();
+            }
 
             return Ok(clienteGanador);
-
-            //return await dbContext.Rifas.ToListAsync();
         }
 
         [HttpPost]
         public async Task<ActionResult> Post(BoletoCreacionDTO boletoCreacionDTO)
         {
-            var boleto = mapper.Map<Boleto>(boletoCreacionDTO);
+            logger.LogInformation("*****AGREGANDO BOLETO*****");
+            var existeBoleto = await dbContext.Boletos.AnyAsync(x => x.NumeroBoleto == boletoCreacionDTO.NumeroBoleto);
 
+            if (existeBoleto)
+            {
+                logger.LogError("*****NO SE PUEDE DUPLICAR BOLETO*****");
+                return BadRequest($"Ya existe un boleto con el numero: {boletoCreacionDTO.NumeroBoleto}");
+            }
+
+            var boleto = mapper.Map<Boleto>(boletoCreacionDTO);
             dbContext.Add(boleto);
             await dbContext.SaveChangesAsync();
             return Ok();
@@ -56,9 +72,11 @@ namespace WebApiPIA.Controllers
         [HttpPut("{id:int}")]
         public async Task<ActionResult> Put(BoletoCreacionDTO boletoCreacionDTO, int id)
         {
+            logger.LogInformation("*****EDITANDO BOLETO*****");
             var exist = await dbContext.Boletos.AnyAsync(x => x.Id == id);
             if (!exist)
             {
+                logger.LogError("*****NO EXISTE EL BOLETO A EDITAR*****");
                 return NotFound();
             }
 
@@ -78,6 +96,7 @@ namespace WebApiPIA.Controllers
         [HttpPatch("{id:int}")]
         public async Task<ActionResult> Patch(int id, JsonPatchDocument<BoletoPatchDTO> patchDocument)
         {
+            logger.LogInformation("*****EDITANDO BOLETO*****");
             if (patchDocument == null)
             {
                 return BadRequest();
@@ -86,12 +105,12 @@ namespace WebApiPIA.Controllers
             var boleto = await dbContext.Boletos.FirstOrDefaultAsync(x => x.Id == id);
             if (boleto == null)
             {
+                logger.LogError("*****NO EXISTE EL BOLETO A EDITAR*****");
                 return NotFound();
             }
 
             var boletoDTO = mapper.Map<BoletoPatchDTO>(boleto);
             patchDocument.ApplyTo(boletoDTO, ModelState);
-
             var esValido = TryValidateModel(boletoDTO);
 
             if (!esValido)
@@ -100,7 +119,6 @@ namespace WebApiPIA.Controllers
             }
 
             mapper.Map(boletoDTO, boleto);
-
             await dbContext.SaveChangesAsync();
             return NoContent();
         }
@@ -108,9 +126,11 @@ namespace WebApiPIA.Controllers
         [HttpDelete("{id:int}")]
         public async Task<ActionResult> Delete(int id)
         {
+            logger.LogInformation("*****BORRANDO BOLETO*****");
             var exist = await dbContext.Boletos.AnyAsync(x => x.Id == id);
             if (!exist)
             {
+                logger.LogError("*****NO EXISTE EL BOLETO A BORRAR*****");
                 return NotFound("El boleto no fue encontrado.");
             }
 
@@ -121,8 +141,6 @@ namespace WebApiPIA.Controllers
 
             await dbContext.SaveChangesAsync();
             return Ok();
-
         }
-
     }
 }

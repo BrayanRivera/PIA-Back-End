@@ -13,16 +13,19 @@ namespace WebApiPIA.Controllers
     {
         private readonly ApplicationDbContext dbContext;
         private readonly IMapper mapper;
+        private readonly ILogger<ClientesController> logger;
 
-        public PremiosController(ApplicationDbContext context, IMapper mapper)
+        public PremiosController(ApplicationDbContext context, IMapper mapper, ILogger<ClientesController> logger)
         {
             this.dbContext = context;
             this.mapper = mapper;
+            this.logger = logger;
         }
 
         [HttpGet]
         public async Task<ActionResult<List<GetPremioDTO>>> Get()
         {
+            logger.LogInformation("*****OBTENIENDO LOS PREMIOS*****");
             var premio = await dbContext.Premios.ToListAsync();
             return mapper.Map<List<GetPremioDTO>>(premio);
         }
@@ -30,30 +33,38 @@ namespace WebApiPIA.Controllers
         [HttpGet("premioDeRifa/{numeroRifa:int}", Name = "ObtenerPremio")]
         public async Task<ActionResult<List<Rifa>>> Get(int numeroRifa)
         {
+            logger.LogInformation("*****OBTENIENDO EL PREMIO*****");
             var rifa = await dbContext.Rifas.FirstOrDefaultAsync(x => x.NumeroRifa == numeroRifa);
             if (rifa == null)
             {
+                logger.LogError("*****NO SE ENCONTRO PREMIO ASCOCIADA A LA RIFA*****");
                 return NotFound();
             }
 
             var existePremio = await dbContext.Premios.AnyAsync(premioDB => premioDB.RifaId == rifa.Id);
             if (!existePremio)
             {
+                logger.LogError("*****NO SE ENCONTRO EL PREMIO SOLICITADO*****");
                 return NotFound();
             }
 
             var premio = await dbContext.Premios.FirstOrDefaultAsync(premioDB => premioDB.RifaId == rifa.Id);
-
             return Ok(premio);
-
-            //return await dbContext.Rifas.ToListAsync();
         }
 
         [HttpPost]
         public async Task<ActionResult> Post(PremioCreacionDTO premioCreacionDTO)
         {
-            var premio = mapper.Map<Premio>(premioCreacionDTO);
+            logger.LogInformation("*****AGREGANDO EL PREMIO*****");
+            var existePremio = await dbContext.Premios.AnyAsync(x => x.NombrePremio == premioCreacionDTO.NombrePremio);
 
+            if (existePremio)
+            {
+                logger.LogError("*****NO SE PUEDE DUPLICAR EL PREMIO*****");
+                return BadRequest($"Ya existe el premio: {premioCreacionDTO.NombrePremio}");
+            }
+
+            var premio = mapper.Map<Premio>(premioCreacionDTO);
             dbContext.Add(premio);
             await dbContext.SaveChangesAsync();
             return Ok();
@@ -62,9 +73,11 @@ namespace WebApiPIA.Controllers
         [HttpPut("{id:int}")] 
         public async Task<ActionResult> Put(PremioCreacionDTO premioCreacionDTO, int id)
         {
+            logger.LogInformation("*****EDITANDO EL PREMIO*****");
             var exist = await dbContext.Premios.AnyAsync(x => x.Id == id);
             if (!exist)
             {
+                logger.LogError("*****NO SE ENCONTRO EL PREMIO A EDITAR*****");
                 return NotFound();
             }
 
@@ -73,6 +86,7 @@ namespace WebApiPIA.Controllers
 
             if (premio.Id != id)
             {
+                logger.LogError("*****NO SE ENCONTRO EL PREMIO A EDITAR*****");
                 return BadRequest("El id del premio no coincide con el establecido en la url.");
             }
 
@@ -84,6 +98,7 @@ namespace WebApiPIA.Controllers
         [HttpPatch("{id:int}")]
         public async Task<ActionResult> Patch(int id, JsonPatchDocument<PremioPatchDTO> patchDocument)
         {
+            logger.LogInformation("*****EDITANDO EL PREMIO*****");
             if (patchDocument == null)
             {
                 return BadRequest();
@@ -92,12 +107,12 @@ namespace WebApiPIA.Controllers
             var premio = await dbContext.Premios.FirstOrDefaultAsync(x => x.Id == id);
             if (premio == null)
             {
+                logger.LogError("*****NO SE ENCONTRO EL PREMIO A EDITAR*****");
                 return NotFound();
             }
 
             var premioDTO = mapper.Map<PremioPatchDTO>(premio);
             patchDocument.ApplyTo(premioDTO, ModelState);
-
             var esValido = TryValidateModel(premioDTO);
 
             if (!esValido)
@@ -106,7 +121,6 @@ namespace WebApiPIA.Controllers
             }
 
             mapper.Map(premioDTO, premio);
-
             await dbContext.SaveChangesAsync();
             return NoContent();
         }
@@ -114,9 +128,11 @@ namespace WebApiPIA.Controllers
         [HttpDelete("{id:int}")]
         public async Task<ActionResult> Delete(int id)
         {
+            logger.LogInformation("*****BORRANDO EL PREMIO*****");
             var exist = await dbContext.Premios.AnyAsync(x => x.Id == id);
             if (!exist)
             {
+                logger.LogError("*****NO SE ENCONTRO EL PREMIO A BORRAR*****");
                 return NotFound("El premio no fue encontrado.");
             }
 
@@ -127,7 +143,6 @@ namespace WebApiPIA.Controllers
 
             await dbContext.SaveChangesAsync();
             return Ok();
-
         }
     }
 }

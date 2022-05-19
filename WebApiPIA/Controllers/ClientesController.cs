@@ -13,36 +13,72 @@ namespace WebApiPIA.Controllers
     {
         private readonly ApplicationDbContext dbContext;
         private readonly IMapper mapper;
+        private readonly ILogger<ClientesController> logger;
 
-        public ClientesController(ApplicationDbContext context, IMapper mapper)
+        public ClientesController(ApplicationDbContext context, IMapper mapper, ILogger<ClientesController> logger)
         {
             this.dbContext = context;
             this.mapper = mapper;
+            this.logger = logger;
         }
 
         [HttpGet]
         public async Task<ActionResult<List<GetClienteDTO>>> Get()
         {
-            var cliente = await dbContext.Clientes.ToListAsync();
-            return mapper.Map<List<GetClienteDTO>>(cliente);
+            logger.LogInformation("*****OBTENIENDO LOS CLIENTES*****");
+            var clientes = await dbContext.Clientes.ToListAsync();
+            return mapper.Map<List<GetClienteDTO>>(clientes);
+        }
+
+        [HttpGet("{id:int}", Name = "obtenerCliente")]
+        public async Task<ActionResult<GetClienteDTO>> Get(int id)
+        {
+            logger.LogInformation("*****OBTENIENDO EL CLIENTE*****");
+            var cliente = await dbContext.Clientes.FirstOrDefaultAsync(x => x.Id == id);
+
+            if (cliente == null)
+            {
+                logger.LogError("*****NO SE ENCONTRO EL CLIENTE SOLICITADO*****");
+                return NotFound();
+            }
+
+            return mapper.Map<GetClienteDTO>(cliente);
         }
 
         [HttpPost]
         public async Task<ActionResult> Post(ClienteCreacionDTO clienteCreacionDTO)
         {
-            var cliente = mapper.Map<Cliente>(clienteCreacionDTO);
+            logger.LogInformation("*****AGREGANDO CLIENTE NUEVO*****");
+            var existeCliente = await dbContext.Clientes.AnyAsync(x => x.NumeroCliente == clienteCreacionDTO.NumeroCliente);
 
+            if (existeCliente)
+            {
+                logger.LogError("*****NO SE PUEDE DUPLICAR EL CLIENTE*****");
+                return BadRequest($"Ya existe un cliente con el numero: {clienteCreacionDTO.NumeroCliente}");
+            }
+
+            var cantidadDeClientes = await dbContext.Clientes.CountAsync();
+            if(cantidadDeClientes >= 54)
+            {
+                logger.LogError("*****YA SE TIENE EL LIMITE DE CLIENTES (54)*****");
+                return BadRequest($"Ya se alcanzo el limite de clientes participantes (54 participantes)");
+            }
+
+            var cliente = mapper.Map<Cliente>(clienteCreacionDTO);
             dbContext.Add(cliente);
             await dbContext.SaveChangesAsync();
-            return Ok();
+            var clienteDTO = mapper.Map<GetClienteDTO>(cliente);
+            return CreatedAtRoute("obtenerCliente", new { id = cliente.Id }, clienteDTO);
         }
 
         [HttpPut("{id:int}")]
         public async Task<ActionResult> Put(ClienteCreacionDTO clienteCreacionDTO, int id)
         {
+            logger.LogInformation("*****EDITANDO CLIENTE*****");
             var exist = await dbContext.Clientes.AnyAsync(x => x.Id == id);
             if (!exist)
             {
+                logger.LogError("*****NO EXISTE EL CLIENTE A EDITAR*****");
                 return NotFound();
             }
 
@@ -62,6 +98,7 @@ namespace WebApiPIA.Controllers
         [HttpPatch("{id:int}")]
         public async Task<ActionResult> Patch(int id, JsonPatchDocument<ClientePatchDTO> patchDocument)
         {
+            logger.LogInformation("*****EDITANDO CLIENTE*****");
             if (patchDocument == null)
             {
                 return BadRequest();
@@ -70,12 +107,12 @@ namespace WebApiPIA.Controllers
             var cliente = await dbContext.Clientes.FirstOrDefaultAsync(x => x.Id == id);
             if (cliente == null)
             {
+                logger.LogError("*****NO EXISTE EL CLIENTE A EDITAR*****");
                 return NotFound();
             }
 
             var clienteDTO = mapper.Map<ClientePatchDTO>(cliente);
             patchDocument.ApplyTo(clienteDTO, ModelState);
-
             var esValido = TryValidateModel(clienteDTO);
 
             if (!esValido)
@@ -84,7 +121,6 @@ namespace WebApiPIA.Controllers
             }
 
             mapper.Map(clienteDTO, cliente);
-
             await dbContext.SaveChangesAsync();
             return NoContent();
         }
@@ -92,9 +128,11 @@ namespace WebApiPIA.Controllers
         [HttpDelete("{id:int}")]
         public async Task<ActionResult> Delete(int id)
         {
+            logger.LogInformation("*****BORRANDO CLIENTE*****");
             var existeCliente = await dbContext.Clientes.AnyAsync(x => x.Id == id);
             if (!existeCliente)
             {
+                logger.LogError("*****NO EXISTE EL CLIENTE A BORRAR*****");
                 return NotFound("El cliente no fue encontrado.");
             }
 
@@ -105,7 +143,6 @@ namespace WebApiPIA.Controllers
 
             await dbContext.SaveChangesAsync();
             return Ok();
-
         }
     }
 }
