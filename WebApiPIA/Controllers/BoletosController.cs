@@ -36,7 +36,7 @@ namespace WebApiPIA.Controllers
 
         [HttpGet("obtenerClienteGanador/{numeroBoleto:int}", Name = "ObtenerClienteGanador")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
-        public async Task<ActionResult<List<Boleto>>> Get(int numeroBoleto)
+        public async Task<ActionResult<GetClienteDTO>> Get(int numeroBoleto)
         {
             logger.LogInformation("*****OBTENIENDO CLIENTE GANADOR*****");
             var boleto = await dbContext.Boletos.FirstOrDefaultAsync(x => x.NumeroBoleto == numeroBoleto);
@@ -53,7 +53,8 @@ namespace WebApiPIA.Controllers
                 return NotFound();
             }
 
-            return Ok(clienteGanador);
+            return mapper.Map<GetClienteDTO>(clienteGanador);
+            //return Ok(clienteGanador);
         }
 
         [HttpPost]

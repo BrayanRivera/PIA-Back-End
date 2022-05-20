@@ -83,7 +83,7 @@ namespace WebApiPIA.Controllers
             dbContext.Add(cliente);
             await dbContext.SaveChangesAsync();
             var clienteDTO = mapper.Map<GetClienteDTO>(cliente);
-            return CreatedAtRoute("obtenerCliente", new { numeroCleinte = cliente.NumeroCliente }, clienteDTO);
+            return CreatedAtRoute("obtenerCliente", new { numeroCliente = cliente.NumeroCliente }, clienteDTO);
         }
 
         [HttpPut("{id:int}")]

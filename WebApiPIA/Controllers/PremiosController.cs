@@ -52,8 +52,11 @@ namespace WebApiPIA.Controllers
                 logger.LogError("*****NO SE ENCONTRO EL PREMIO SOLICITADO*****");
                 return NotFound();
             }
-
-            var premio = await dbContext.Premios.FirstOrDefaultAsync(premioDB => premioDB.RifaId == rifa.Id);
+            int premioRifaCount = await dbContext.Premios.CountAsync(premioDB => premioDB.RifaId == rifa.Id).ConfigureAwait(false);
+            logger.LogInformation(premioRifaCount.ToString());
+            Random r = new Random();
+            int numeroRandom = r.Next(0, premioRifaCount);
+            var premio = await dbContext.Premios.Skip(numeroRandom).FirstOrDefaultAsync(premioDB => premioDB.RifaId == rifa.Id);
             return Ok(premio);
         }
 
