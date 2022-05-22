@@ -45,7 +45,7 @@ namespace WebApiPIA.Controllers
                 return NotFound();
             }
                 
-            var existeBoleto = await dbContext.Boletos.AnyAsync(boletoDB => boletoDB.Id == rifa.Id);
+            var existeBoleto = await dbContext.Boletos.AnyAsync(boletoDB => boletoDB.RifaID == rifa.Id);
             if (!existeBoleto)
             {
                 logger.LogError("*****NO SE ENCONTRO EL BOLETO SOLICITADO*****");

@@ -54,7 +54,6 @@ namespace WebApiPIA.Controllers
             }
 
             return mapper.Map<GetClienteDTO>(clienteGanador);
-            //return Ok(clienteGanador);
         }
 
         [HttpPost]

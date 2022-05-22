@@ -62,7 +62,6 @@ namespace WebApiPIA.Controllers
             var email = emailClaim.Value;
             var usuario = await userManager.FindByEmailAsync(email);
             var usuarioId = usuario.Id;
-
             var existeCliente = await dbContext.Clientes.AnyAsync(x => x.NumeroCliente == clienteCreacionDTO.NumeroCliente);
 
             if (existeCliente)
@@ -123,7 +122,6 @@ namespace WebApiPIA.Controllers
         public async Task<ActionResult> Patch(int id, JsonPatchDocument<ClientePatchDTO> patchDocument)
         {
             logger.LogInformation("*****EDITANDO CLIENTE*****");
-
             var emailClaim = HttpContext.User.Claims.Where(claim => claim.Type == "email").FirstOrDefault();
             var email = emailClaim.Value;
             var usuario = await userManager.FindByEmailAsync(email);

@@ -82,7 +82,6 @@ namespace WebApiPIA.Controllers
         {
             var usuario = new IdentityUser { UserName = credencialesUsuario.Email, Email = credencialesUsuario.Email };
             var resultado = await userManager.CreateAsync(usuario, credencialesUsuario.Password);
-
             if (resultado.Succeeded)
             {
                 return await ConstruirToken(credencialesUsuario);
